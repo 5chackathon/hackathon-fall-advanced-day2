@@ -9,28 +9,61 @@
         <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{api_key}}"></script>
         <script type="text/javascript"> 
         // Firebase!
-        var DB = new Firebase('https://hub-test.firebaseio.com');
-        var day1 = DB.child("day1");
-        // Initialize map
+        var DB = new Firebase('{{firebase_url}}');
+
+        // Define a reference to a field in the database
+        var day1 = DB.child('day1');
+
+        // Global map variable 
         var map;
+
+        // Where are we?
         var claremont = { lat: 34.100629, lng: -117.707591};
+
+        // Initialize map
         function initialize() {
+          // Determine the options for the map like center and zoom.
           var mapOptions = { center: claremont, zoom: 15 };
+
+          // Create and draw the map in the div with id "map"
           map = new google.maps.Map(document.getElementById('map'),
                                     mapOptions);
-
+          /*
+           * When the map is clicked, we add a listener.
+           * We keep it in the initialize function because
+           * we can't add a listener until the map is created,
+           * and the map isn't created until we initialize it.
+           */
           google.maps.event.addListener(map, 'click', addLatLng);
         }
+
+        // When the window has finished loading, we initialize the map.
         google.maps.event.addDomListener(window, 'load', initialize);
+
+        /*
+         * A function that when called, pushes a location to the database
+         */
         function addLatLng(event) {
           day1.push(event.latLng);
         }
+
+        /*
+         * A listener for the database such that when a field is added
+         * to day1, we find the location and extract it and draw a marker
+         * on the map. 
+         * Note that when you reload a page, firebase replays all the
+         * pushes which is how this works. Also, if you've already loaded
+         * a page and a push occurs, we draw a marker as well.
+         */
         day1.on('child_added', function(snapshot) {
           var pos = snapshot.val();
           var loc = {lat: pos.k, lng: pos.B};
           placeMarker(loc);
         });
 
+        /*
+         * Function to draw a marker.
+         */
         function placeMarker(loc) {
           var marker = new google.maps.Marker({
             position: loc,
